@@ -1,0 +1,1 @@
+This controller changes the active egress of a WireGuard VPN connection in RouterOS. The script `set-wireguard-target` runs (in this case) on the hEx router.

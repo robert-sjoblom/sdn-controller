@@ -1,0 +1,30 @@
+/system script add name="set-wireguard-target" source="
+:global vpnTargetIp;
+:global vpnTargetPort;
+:global vpnTargetPublicKey;
+:global vpnEnabled;
+
+:local peerID [/interface wireguard peers find comment=\"ProtonVPN-Peer\"];
+:if ([:len \$peerID] = 0) do={ :set peerID [/interface wireguard peers find]; }
+
+:if ([:len \$peerID] > 0) do={
+:if (\$vpnEnabled = \"false\") do={
+/interface wireguard peers set \$peerID disabled=yes;
+/ip firewall connection remove [find src-address~\"192.168.30.\"];
+:log info (\"SDN Controller: WireGuard peer disabled\");
+} else={
+:local pPort \$vpnTargetPort;
+:if ([:len \$pPort] = 0) do={ :set pPort 51820; }
+
+/interface wireguard peers set \$peerID disabled=no endpoint-address=\$vpnTargetIp endpoint-port=\$pPort;
+:if ([:len \$vpnTargetPublicKey] > 0) do={
+/interface wireguard peers set \$peerID public-key=\$vpnTargetPublicKey;
+}
+
+/ip firewall connection remove [find src-address~\"192.168.30.\"];
+:log info (\"SDN Controller: Switched WireGuard peer to \$vpnTargetIp\");
+}
+} else={
+:log error (\"SDN Controller: WireGuard peer 'ProtonVPN-Peer' not found\");
+}
+"
